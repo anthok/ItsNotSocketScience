@@ -1,9 +1,11 @@
 from argparse import ArgumentParser
+from datetime import datetime
 import socket, threading, os, sys
 import json, time
 import net_objects
 import pathlib
 import logging
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -25,12 +27,14 @@ class ClientThread(threading.Thread):
     def run(self):
         logger.info("[TCP]: Connection from : {}".format(self.caddress))
         data = self.csocket.recv(1024 * 100) # 100K
-        with open("{}/{}".format(self.log_dir, self.caddress[0]), 'ab') as fh:
-            fh.write(data)
+        with open("{}/{}".format(self.log_dir, self.caddress[0]), 'a') as fh:
+            now = datetime.now() # current date and time
+            date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
+            fh.write("{},{},{},{}".format(self.caddress[0], self.csocket.getsockname()[1], data.replace(b',',b'//COMMA//'), date_time))
         logger.info("[TCP]: DATA from {}".format(self.caddress))
         self.csocket.close()
 
-class SocketServer(threading.Thread):
+class SocketServer(threading.Thread):   
     def __init__(self, port_obj):
         threading.Thread.__init__(self)
         self.port_obj = port_obj
