@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-import socket, threading, os
+import socket, threading, os, sys
 import json, time
 import net_objects
 import pathlib
@@ -19,10 +19,16 @@ class ClientThread(threading.Thread):
         threading.Thread.__init__(self)
         self.log_dir = log_dir
         self.csocket = clientsocket
-        logger.info("New connection added: ", clientAddress)
+        self.caddress = clientAddress
+        logger.info("[TCP]: New connection added: {}".format(self.caddress))
 
     def run(self):
-        logger("Connection from : ", clientAddress)
+        logger.info("[TCP]: Connection from : {}".format(self.caddress))
+        data = self.csocket.recv(1024 * 100) # 100K
+        with open("{}/{}".format(self.log_dir, self.caddress[0]), 'ab') as fh:
+            fh.write(data)
+        logger.info("[TCP]: DATA from {}".format(self.caddress))
+        self.csocket.close()
 
 class SocketServer(threading.Thread):
     def __init__(self, port_obj):
@@ -46,15 +52,17 @@ class SocketServer(threading.Thread):
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.bind(("0.0.0.0", self.port_obj.number))
         if self.port_obj.type == socket.SOCK_STREAM:
-            logger.info("TCP: {}".format(self.port_obj.number))
+            logger.info("[TCP]: {}".format(self.port_obj.number))
             while True:
                 server.listen(1)
-        #         clientsock, clientAddress = server.accept()
-        #         newthread = ClientThread(clientAddress, clientsock)
-        #         newthread.start()
-        else:
-            logger.info("UDP: {}".format(self.port_obj.number))
-            bytesAddressPair = server.recvfrom(1024)
+                clientsock, clientAddress = server.accept()
+                newthread = ClientThread(self.output_path, clientAddress, clientsock)
+                newthread.start()
+        # else:
+        #     logger.info("[UDP]: {}".format(self.port_obj.number))
+        #     while True:
+        #         data = server.recvfrom(1024)
+        #         #log udp
 
 def is_valid_file(parser, arg):
     if not os.path.exists(arg):
