@@ -22,16 +22,16 @@ class ClientThread(threading.Thread):
         self.log_dir = log_dir
         self.csocket = clientsocket
         self.caddress = clientAddress
-        logger.info("[TCP]: New connection added: {}".format(self.caddress))
+        logger.info("[TCP]: New connection added: {}:{}".format(self.caddress[0], self.csocket.getsockname()[1]))
 
     def run(self):
-        logger.info("[TCP]: Connection from : {}".format(self.caddress))
+        logger.info("[TCP]: Connection from : {}:{}".format(self.caddress[0], self.csocket.getsockname()[1]))
         data = self.csocket.recv(1024 * 100) # 100K
         with open("{}/{}".format(self.log_dir, self.caddress[0]), 'a') as fh:
             now = datetime.now() # current date and time
             date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
-            fh.write("{},{},{},{}".format(self.caddress[0], self.csocket.getsockname()[1], data.replace(b',',b'//COMMA//'), date_time))
-        logger.info("[TCP]: DATA from {}".format(self.caddress))
+            fh.write("{},{},{},{}\n".format(self.caddress[0], self.csocket.getsockname()[1], data.replace(b',',b'//COMMA//'), date_time))
+        logger.info("[TCP]: DATA from {}:{}".format(self.caddress[0], self.csocket.getsockname()[1]))
         self.csocket.close()
 
 class SocketServer(threading.Thread):   
