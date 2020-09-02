@@ -1,11 +1,20 @@
-from argparse import ArgumentParser
-from datetime import datetime
-import socket, threading, os, sys
-import json, time
-import net_objects
-import pathlib
-import logging
+#!/usr/bin/python3
 
+try:
+    import socket
+    import threading
+    import os
+    import sys
+    import json
+    import pathlib
+    import logging
+    import sys
+    from argparse import ArgumentParser
+    from datetime import datetime
+    from socketscience import net_objects
+except ImportError as ie:
+    print("ImportError, {}".format(ie))
+    sys.exit(1)
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -15,6 +24,7 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
 
 class ClientThread(threading.Thread):
     def __init__(self, log_dir, clientAddress, clientsocket):
@@ -30,11 +40,15 @@ class ClientThread(threading.Thread):
         with open("{}/{}".format(self.log_dir, self.caddress[0]), 'a') as fh:
             now = datetime.now() # current date and time
             date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
-            fh.write("{},{},{},{}\n".format(self.caddress[0], self.csocket.getsockname()[1], data.replace(b',',b'//COMMA//'), date_time))
+            fh.write("{},{},{},{}\n".format(self.caddress[0],
+                                            self.csocket.getsockname()[1],
+                                            data.replace(b',', b'//COMMA//'),
+                                            date_time))
         logger.info("[TCP]: DATA from {}:{}".format(self.caddress[0], self.csocket.getsockname()[1]))
         self.csocket.close()
 
-class SocketServer(threading.Thread):   
+
+class SocketServer(threading.Thread):
     def __init__(self, port_obj):
         threading.Thread.__init__(self)
         self.port_obj = port_obj
@@ -96,6 +110,7 @@ def main():
 
     for thread in thread_keeper:
         thread.start()
+
 
 if __name__ == "__main__":
     main()
